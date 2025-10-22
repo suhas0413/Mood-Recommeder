@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Mood-Based Content Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 20px 0;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .input-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            color: white;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .results {
+            display: none;
+        }
+        
+        .mood-header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .mood-header h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .category {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .category-title {
+            font-size: 1.8em;
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #764ba2;
+            transition: transform 0.2s;
+        }
+        
+        .item:hover {
+            transform: translateX(5px);
+        }
+        
+        .item-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .item-meta {
+            color: #666;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+        
+        .item-description {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        
+        .item-why {
+            background: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            color: #667eea;
+            font-size: 0.95em;
+            margin-top: 10px;
+        }
+        
+        .error {
+            background: #ff4444;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            
+            .input-section {
+                padding: 25px;
+            }
+            
+            .category {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎭 AI Mood-Based Content Generator</h1>
+            <p class="subtitle">Discover personalized content that matches your vibe</p>
+        </header>
+        
+        <div class="input-section">
+            <form id="moodForm">
+                <div class="form-group">
+                    <label for="mood">How are you feeling? *</label>
+                    <select id="mood" required>
+                        <option value="">Select your mood...</option>
+                        <option value="happy">😊 Happy</option>
+                        <option value="sad">😢 Sad</option>
+                        <option value="excited">🎉 Excited</option>
+                        <option value="calm">😌 Calm</option>
+                        <option value="anxious">😰 Anxious</option>
+                        <option value="motivated">💪 Motivated</option>
+                        <option value="romantic">💕 Romantic</option>
+                        <option value="nostalgic">🌅 Nostalgic</option>
+                        <option value="adventurous">🗺️ Adventurous</option>
+                        <option value="thoughtful">🤔 Thoughtful</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="topic">Specific topic or interest? (optional)</label>
+                    <input type="text" id="topic" placeholder="e.g., sci-fi, cooking, travel, technology...">
+                </div>
+                
+                <button type="submit" class="btn">Generate Recommendations ✨</button>
+            </form>
+        </div>
+        
+        <div class="error" id="error"></div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <h2>Crafting your personalized recommendations...</h2>
+        </div>
+        
+        <div class="results" id="results">
+            <div class="mood-header" id="moodHeader"></div>
+            
+            <div class="category" id="moviesSection">
+                <h2 class="category-title">🎬 Movies</h2>
+                <div id="movies"></div>
+            </div>
+            
+            <div class="category" id="songsSection">
+                <h2 class="category-title">🎵 Songs</h2>
+                <div id="songs"></div>
+            </div>
+            
+            <div class="category" id="booksSection">
+                <h2 class="category-title">📚 Books</h2>
+                <div id="books"></div>
+            </div>
+            
+            <div class="category" id="blogsSection">
+                <h2 class="category-title">📝 Blog Topics</h2>
+                <div id="blogs"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('moodForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const mood = document.getElementById('mood').value;
+            const topic = document.getElementById('topic').value;
+            
+            // Hide previous results and errors
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ mood, topic })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                displayResults(data);
+                
+            } catch (error) {
+                document.getElementById('error').textContent = error.message;
+                document.getElementById('error').style.display = 'block';
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+        
+        function displayResults(data) {
+            const { mood, topic, recommendations } = data;
+            
+            // Update mood header
+            const moodHeader = document.getElementById('moodHeader');
+            moodHeader.innerHTML = `
+                <h2>Your personalized recommendations for: ${mood}${topic ? ` + ${topic}` : ''}</h2>
+                <p>Curated just for you by AI ✨</p>
+            `;
+            
+            // Display movies
+            const moviesDiv = document.getElementById('movies');
+            moviesDiv.innerHTML = recommendations.movies.map(movie => `
+                <div class="item">
+                    <div class="item-title">${movie.title}</div>
+                    <div class="item-description">${movie.description}</div>
+                    <div class="item-why"><strong>Why this matches:</strong> ${movie.why}</div>
+                </div>
+            `).join('');
+            
+            // Display songs
+            const songsDiv = document.getElementById('songs');
+            songsDiv.innerHTML = recommendations.songs.map(song => `
+                <div class="item">
+                    <div class="item-title">${song.title}</div>
+                    <div class="item-meta">${song.artist}</div>
+                    <div class="item-description">${song.description}</div>
+                    <div class="item-why"><strong>Why this matches:</strong> ${song.why}</div>
+                </div>
+            `).join('');
+            
+            // Display books
+            const booksDiv = document.getElementById('books');
+            booksDiv.innerHTML = recommendations.books.map(book => `
+                <div class="item">
+                    <div class="item-title">${book.title}</div>
+                    <div class="item-meta">by ${book.author}</div>
+                    <div class="item-description">${book.description}</div>
+                    <div class="item-why"><strong>Why this matches:</strong> ${book.why}</div>
+                </div>
+            `).join('');
+            
+            // Display blogs
+            const blogsDiv = document.getElementById('blogs');
+            blogsDiv.innerHTML = recommendations.blogs.map(blog => `
+                <div class="item">
+                    <div class="item-title">${blog.title}</div>
+                    <div class="item-description">${blog.description}</div>
+                    <div class="item-why"><strong>Why this matches:</strong> ${blog.why}</div>
+                </div>
+            `).join('');
+            
+            // Show results
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
