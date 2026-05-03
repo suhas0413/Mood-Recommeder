@@ -1,395 +1,1047 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Mood-Based Content Generator</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: var(--font-sans);
+        background: var(--color-background-primary);
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
         }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: #333;
+    }
+
+    @keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(16px);
         }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        header {
-            text-align: center;
-            color: white;
-            margin-bottom: 40px;
-            padding: 20px 0;
-        }
-        
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-        
-        .subtitle {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
-        
-        .input-section {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            margin-bottom: 30px;
-        }
-        
-        .form-group {
-            margin-bottom: 25px;
-        }
-        
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: #667eea;
-            font-size: 1.1em;
-        }
-        
-        input, select {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-        
-        input:focus, select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 40px;
-            border: none;
-            border-radius: 50px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            width: 100%;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-        }
-        
-        .btn:active {
+
+        to {
+            opacity: 1;
             transform: translateY(0);
         }
-        
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
         }
-        
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 40px;
-            color: white;
+
+        to {
+            opacity: 1;
         }
-        
-        .spinner {
-            border: 4px solid rgba(255,255,255,0.3);
-            border-top: 4px solid white;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            transform: scale(1);
         }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+
+        50% {
+            transform: scale(1.04);
         }
-        
-        .results {
-            display: none;
+    }
+
+    @keyframes shimmer {
+        0% {
+            background-position: -400px 0;
         }
-        
-        .mood-header {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 30px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+
+        100% {
+            background-position: 400px 0;
         }
-        
-        .mood-header h2 {
-            color: #667eea;
-            margin-bottom: 10px;
+    }
+
+    @keyframes float {
+
+        0%,
+        100% {
+            transform: translateY(0);
         }
-        
-        .category {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+
+        50% {
+            transform: translateY(-5px);
         }
-        
-        .category-title {
-            font-size: 1.8em;
-            color: #667eea;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 3px solid #667eea;
+    }
+
+    @keyframes gradShift {
+        0% {
+            background-position: 0% 50%;
         }
-        
-        .item {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-left: 4px solid #764ba2;
-            transition: transform 0.2s;
+
+        50% {
+            background-position: 100% 50%;
         }
-        
-        .item:hover {
-            transform: translateX(5px);
+
+        100% {
+            background-position: 0% 50%;
         }
-        
-        .item-title {
-            font-size: 1.3em;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
+    }
+
+    @keyframes badgePop {
+        0% {
+            transform: scale(0.8);
+            opacity: 0;
         }
-        
-        .item-meta {
-            color: #666;
-            font-style: italic;
-            margin-bottom: 10px;
+
+        70% {
+            transform: scale(1.08);
         }
-        
-        .item-description {
-            color: #555;
-            line-height: 1.6;
-            margin-bottom: 10px;
+
+        100% {
+            transform: scale(1);
+            opacity: 1;
         }
-        
-        .item-why {
-            background: #fff;
-            padding: 10px;
-            border-radius: 5px;
-            color: #667eea;
-            font-size: 0.95em;
-            margin-top: 10px;
+    }
+
+    @keyframes tabSlide {
+        from {
+            opacity: 0;
+            transform: translateX(-8px);
         }
-        
-        .error {
-            background: #ff4444;
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            display: none;
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
         }
-        
-        .icon {
-            font-size: 2em;
-            margin-bottom: 10px;
+    }
+
+    @keyframes cardIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
         }
-        
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2em;
-            }
-            
-            .input-section {
-                padding: 25px;
-            }
-            
-            .category {
-                padding: 20px;
-            }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>🎭 AI Mood-Based Content Generator</h1>
-            <p class="subtitle">Discover personalized content that matches your vibe</p>
-        </header>
-        
-        <div class="input-section">
-            <form id="moodForm">
-                <div class="form-group">
-                    <label for="mood">How are you feeling? *</label>
-                    <select id="mood" required>
-                        <option value="">Select your mood...</option>
-                        <option value="happy">😊 Happy</option>
-                        <option value="sad">😢 Sad</option>
-                        <option value="excited">🎉 Excited</option>
-                        <option value="calm">😌 Calm</option>
-                        <option value="anxious">😰 Anxious</option>
-                        <option value="motivated">💪 Motivated</option>
-                        <option value="romantic">💕 Romantic</option>
-                        <option value="nostalgic">🌅 Nostalgic</option>
-                        <option value="adventurous">🗺️ Adventurous</option>
-                        <option value="thoughtful">🤔 Thoughtful</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="topic">Specific topic or interest? (optional)</label>
-                    <input type="text" id="topic" placeholder="e.g., sci-fi, cooking, travel, technology...">
-                </div>
-                
-                <button type="submit" class="btn">Generate Recommendations ✨</button>
-            </form>
+    }
+
+    nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 2rem;
+        height: 60px;
+        border-bottom: 0.5px solid rgba(127, 119, 221, 0.2);
+        background: var(--color-background-primary);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .nav-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+    }
+
+    .logo-mark {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        background: linear-gradient(135deg, #7F77DD, #534AB7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    .logo-name {
+        font-size: 17px;
+        font-weight: 500;
+        color: var(--color-text-primary);
+        letter-spacing: -0.02em;
+    }
+
+    .logo-name span {
+        background: linear-gradient(90deg, #7F77DD, #D4537E);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .nav-cta {
+        padding: 9px 22px;
+        background: linear-gradient(135deg, #7F77DD, #534AB7);
+        color: white;
+        border: none;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: var(--font-sans);
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 2px 12px rgba(83, 74, 183, 0.3);
+    }
+
+    .nav-cta:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(83, 74, 183, 0.4);
+    }
+
+    .nav-cta:active {
+        transform: translateY(0);
+    }
+
+    .hero {
+        padding: 3.5rem 2rem 2.5rem;
+        text-align: center;
+        border-bottom: 0.5px solid rgba(127, 119, 221, 0.15);
+        animation: fadeUp 0.6s ease both;
+    }
+
+    .hero-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: linear-gradient(135deg, #EEEDFE, #FBEAF0);
+        border: 0.5px solid #AFA9EC;
+        border-radius: 999px;
+        padding: 5px 16px;
+        font-size: 12px;
+        color: #534AB7;
+        margin-bottom: 1.5rem;
+        animation: badgePop 0.5s ease 0.2s both;
+    }
+
+    .hero-pill .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #7F77DD;
+        animation: pulse 1.5s ease infinite;
+    }
+
+    .hero h1 {
+        font-size: 28px;
+        font-weight: 500;
+        color: var(--color-text-primary);
+        margin-bottom: 10px;
+        line-height: 1.3;
+    }
+
+    .hero h1 .hl {
+        background: linear-gradient(90deg, #7F77DD, #D4537E, #1D9E75);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        background-size: 200% auto;
+        animation: gradShift 4s linear infinite;
+    }
+
+    .hero p {
+        font-size: 14px;
+        color: var(--color-text-secondary);
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    .stats-row {
+        display: flex;
+        justify-content: center;
+        gap: 0;
+        border-bottom: 0.5px solid rgba(127, 119, 221, 0.15);
+        animation: fadeUp 0.6s ease 0.1s both;
+    }
+
+    .stat {
+        flex: 1;
+        max-width: 160px;
+        text-align: center;
+        padding: 1.25rem 1rem;
+        border-right: 0.5px solid rgba(127, 119, 221, 0.15);
+        transition: background 0.2s;
+    }
+
+    .stat:last-child {
+        border-right: none;
+    }
+
+    .stat:hover {
+        background: linear-gradient(135deg, #EEEDFE55, #FBEAF055);
+    }
+
+    .stat-num {
+        font-size: 20px;
+        font-weight: 500;
+        background: linear-gradient(135deg, #534AB7, #D4537E);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stat-label {
+        font-size: 11px;
+        color: var(--color-text-tertiary);
+        margin-top: 3px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .form-wrap {
+        padding: 2rem;
+    }
+
+    .form-card {
+        background: linear-gradient(135deg, #EEEDFE22, #FBEAF022);
+        border-radius: 20px;
+        border: 0.5px solid rgba(127, 119, 221, 0.25);
+        padding: 2rem;
+        animation: fadeUp 0.6s ease 0.2s both;
+    }
+
+    .field-label {
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--color-text-secondary);
+        margin-bottom: 12px;
+    }
+
+    .mood-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        margin-bottom: 1.5rem;
+    }
+
+    .mood-chip {
+        cursor: pointer;
+        border: 0.5px solid rgba(127, 119, 221, 0.2);
+        border-radius: 14px;
+        padding: 12px 6px;
+        text-align: center;
+        background: var(--color-background-primary);
+        transition: all 0.2s;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .mood-chip::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 0.2s;
+        border-radius: 14px;
+    }
+
+    .mood-chip:hover {
+        transform: translateY(-3px);
+        border-color: #7F77DD;
+        box-shadow: 0 6px 18px rgba(127, 119, 221, 0.2);
+    }
+
+    .mood-chip.active {
+        border: 1.5px solid #7F77DD;
+        box-shadow: 0 4px 16px rgba(127, 119, 221, 0.25);
+        transform: translateY(-2px);
+    }
+
+    .mood-chip.active.happy {
+        background: linear-gradient(135deg, #FAEEDA, #FAC77533);
+    }
+
+    .mood-chip.active.sad {
+        background: linear-gradient(135deg, #E6F1FB, #85B7EB33);
+    }
+
+    .mood-chip.active.excited {
+        background: linear-gradient(135deg, #FBEAF0, #ED93B133);
+    }
+
+    .mood-chip.active.calm {
+        background: linear-gradient(135deg, #E1F5EE, #5DCAA533);
+    }
+
+    .mood-chip.active.anxious {
+        background: linear-gradient(135deg, #FCEBEB, #F0959533);
+    }
+
+    .mood-chip.active.motivated {
+        background: linear-gradient(135deg, #EAF3DE, #97C45933);
+    }
+
+    .mood-chip.active.romantic {
+        background: linear-gradient(135deg, #FBEAF0, #D4537E33);
+    }
+
+    .mood-chip.active.nostalgic {
+        background: linear-gradient(135deg, #FAEEDA, #EF9F2733);
+    }
+
+    .mood-chip.active.adventurous {
+        background: linear-gradient(135deg, #E1F5EE, #1D9E7533);
+    }
+
+    .mood-chip.active.thoughtful {
+        background: linear-gradient(135deg, #EEEDFE, #7F77DD33);
+    }
+
+    .mood-chip .mji {
+        font-size: 22px;
+        display: block;
+        margin-bottom: 4px;
+        transition: transform 0.2s;
+    }
+
+    .mood-chip:hover .mji {
+        transform: scale(1.15);
+    }
+
+    .mood-chip.active .mji {
+        animation: pulse 1.2s ease infinite;
+    }
+
+    .mood-chip .mlb {
+        font-size: 11px;
+        color: var(--color-text-secondary);
+    }
+
+    .mood-chip.active .mlb {
+        color: #3C3489;
+        font-weight: 500;
+    }
+
+    .topic-row {
+        margin-bottom: 1.25rem;
+    }
+
+    .topic-row input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 0.5px solid rgba(127, 119, 221, 0.3);
+        border-radius: 12px;
+        font-size: 14px;
+        background: var(--color-background-primary);
+        color: var(--color-text-primary);
+        font-family: var(--font-sans);
+        transition: all 0.2s;
+    }
+
+    .topic-row input:focus {
+        outline: none;
+        border-color: #7F77DD;
+        box-shadow: 0 0 0 3px rgba(127, 119, 221, 0.15);
+    }
+
+    .gen-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #7F77DD, #534AB7, #D4537E);
+        background-size: 200% auto;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: var(--font-sans);
+        transition: all 0.3s;
+        box-shadow: 0 4px 20px rgba(83, 74, 183, 0.35);
+    }
+
+    .gen-btn:hover {
+        background-position: right center;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 28px rgba(83, 74, 183, 0.45);
+    }
+
+    .gen-btn:active {
+        transform: translateY(0);
+    }
+
+    .gen-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .spin-icon {
+        display: none;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.35);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+    }
+
+    .error-bar {
+        background: linear-gradient(135deg, #FCEBEB, #F7C1C122);
+        border: 0.5px solid #F09595;
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-size: 13px;
+        color: #791F1F;
+        margin: 0 2rem 1rem;
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .loading-state {
+        padding: 3rem 2rem;
+        text-align: center;
+        display: none;
+        animation: fadeIn 0.4s ease;
+    }
+
+    .pulse-ring {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px solid rgba(127, 119, 221, 0.3);
+        border-top-color: #534AB7;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto 1rem;
+    }
+
+    .loading-state p {
+        font-size: 14px;
+        color: var(--color-text-secondary);
+    }
+
+    .tabs-wrap {
+        padding: 0 2rem;
+        display: none;
+    }
+
+    .tabs {
+        display: flex;
+        border-bottom: 0.5px solid rgba(127, 119, 221, 0.2);
+        animation: tabSlide 0.4s ease;
+    }
+
+    .tab-btn {
+        flex: 1;
+        padding: 11px;
+        font-size: 13px;
+        color: var(--color-text-secondary);
+        border: none;
+        background: none;
+        cursor: pointer;
+        font-family: var(--font-sans);
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+        border-radius: 0;
+    }
+
+    .tab-btn:hover:not(.active) {
+        color: var(--color-text-primary);
+        background: rgba(127, 119, 221, 0.06);
+    }
+
+    .tab-btn.active {
+        color: #534AB7;
+        border-bottom-color: #534AB7;
+        font-weight: 500;
+    }
+
+    .results-area {
+        padding: 1.5rem 2rem 2rem;
+        display: none;
+    }
+
+    .mood-banner {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 20px;
+        border-radius: 14px;
+        margin-bottom: 1.5rem;
+        border: 0.5px solid;
+        animation: fadeUp 0.5s ease;
+    }
+
+    .mood-banner.happy {
+        background: linear-gradient(135deg, #FAEEDA, #FAC77544);
+        border-color: #EF9F27;
+    }
+
+    .mood-banner.sad {
+        background: linear-gradient(135deg, #E6F1FB, #85B7EB44);
+        border-color: #378ADD;
+    }
+
+    .mood-banner.excited {
+        background: linear-gradient(135deg, #FBEAF0, #ED93B144);
+        border-color: #D4537E;
+    }
+
+    .mood-banner.calm {
+        background: linear-gradient(135deg, #E1F5EE, #5DCAA544);
+        border-color: #1D9E75;
+    }
+
+    .mood-banner.anxious {
+        background: linear-gradient(135deg, #FCEBEB, #F0959544);
+        border-color: #E24B4A;
+    }
+
+    .mood-banner.motivated {
+        background: linear-gradient(135deg, #EAF3DE, #97C45944);
+        border-color: #639922;
+    }
+
+    .mood-banner.romantic {
+        background: linear-gradient(135deg, #FBEAF0, #ED93B144);
+        border-color: #D4537E;
+    }
+
+    .mood-banner.nostalgic {
+        background: linear-gradient(135deg, #FAEEDA, #EF9F2744);
+        border-color: #BA7517;
+    }
+
+    .mood-banner.adventurous {
+        background: linear-gradient(135deg, #E1F5EE, #1D9E7544);
+        border-color: #0F6E56;
+    }
+
+    .mood-banner.thoughtful {
+        background: linear-gradient(135deg, #EEEDFE, #AFA9EC44);
+        border-color: #534AB7;
+    }
+
+    .big-mji {
+        font-size: 32px;
+        line-height: 1;
+        animation: float 2.5s ease-in-out infinite;
+    }
+
+    .btext h3 {
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--color-text-primary);
+    }
+
+    .btext p {
+        font-size: 12px;
+        color: var(--color-text-secondary);
+        margin-top: 3px;
+    }
+
+    .sec-label {
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--color-text-tertiary);
+        margin-bottom: 12px;
+    }
+
+    .items-grid {
+        display: grid;
+        gap: 12px;
+    }
+
+    .rec-card {
+        background: var(--color-background-primary);
+        border: 0.5px solid rgba(127, 119, 221, 0.15);
+        border-radius: 16px;
+        padding: 16px 18px;
+        transition: all 0.25s;
+        animation: cardIn 0.4s ease both;
+    }
+
+    .rec-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(127, 119, 221, 0.4);
+        box-shadow: 0 10px 30px rgba(83, 74, 183, 0.12);
+    }
+
+    .ctype {
+        font-size: 11px;
+        color: var(--color-text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 6px;
+    }
+
+    .ctitle {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--color-text-primary);
+        margin-bottom: 3px;
+        line-height: 1.4;
+    }
+
+    .csub {
+        font-size: 12px;
+        color: var(--color-text-secondary);
+        margin-bottom: 8px;
+    }
+
+    .cdesc {
+        font-size: 13px;
+        color: var(--color-text-secondary);
+        line-height: 1.6;
+        margin-bottom: 10px;
+    }
+
+    .cwhy {
+        font-size: 12px;
+        color: #534AB7;
+        background: linear-gradient(135deg, #EEEDFE, #FBEAF066);
+        border-radius: 8px;
+        padding: 8px 12px;
+        line-height: 1.5;
+        border: 0.5px solid rgba(127, 119, 221, 0.2);
+    }
+
+    footer {
+        border-top: 0.5px solid rgba(127, 119, 221, 0.15);
+        padding: 2.5rem 2rem 2rem;
+        margin-top: 1rem;
+        background: linear-gradient(180deg, transparent, rgba(127, 119, 221, 0.04));
+    }
+
+    .footer-top {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .footer-brand p {
+        font-size: 13px;
+        color: var(--color-text-secondary);
+        margin-top: 10px;
+        line-height: 1.7;
+        max-width: 190px;
+    }
+
+    .footer-col h4 {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--color-text-primary);
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+    }
+
+    .footer-col a {
+        display: block;
+        font-size: 13px;
+        color: var(--color-text-secondary);
+        text-decoration: none;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: color 0.15s;
+    }
+
+    .footer-col a:hover {
+        color: #534AB7;
+    }
+
+    .footer-bottom {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 1.5rem;
+        border-top: 0.5px solid rgba(127, 119, 221, 0.15);
+    }
+
+    .footer-copy {
+        font-size: 12px;
+        color: var(--color-text-tertiary);
+    }
+
+    .footer-badges {
+        display: flex;
+        gap: 8px;
+    }
+
+    .fbadge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        color: var(--color-text-secondary);
+        background: var(--color-background-secondary);
+        border: 0.5px solid rgba(127, 119, 221, 0.2);
+        border-radius: 999px;
+        padding: 4px 12px;
+        transition: all 0.2s;
+    }
+
+    .fbadge:hover {
+        border-color: #7F77DD;
+        color: #534AB7;
+    }
+
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+    }
+</style>
+
+<h2 class="sr-only">Moodly — AI mood-based content discovery app.</h2>
+
+<nav>
+    <div class="nav-logo" onclick="scrollToForm()">
+        <div class="logo-mark">
+            <svg viewBox="0 0 16 16" fill="none" width="18" height="18">
+                <circle cx="8" cy="8" r="5" stroke="white" stroke-width="1.5" />
+                <circle cx="6" cy="7" r="1" fill="white" />
+                <circle cx="10" cy="7" r="1" fill="white" />
+                <path d="M5.5 10 Q8 12.5 10.5 10" stroke="white" stroke-width="1.3" stroke-linecap="round"
+                    fill="none" />
+            </svg>
         </div>
-        
-        <div class="error" id="error"></div>
-        
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <h2>Crafting your personalized recommendations...</h2>
+        <span class="logo-name">mood<span>ly</span></span>
+    </div>
+    <button class="nav-cta" onclick="scrollToForm()">Get started →</button>
+</nav>
+
+<div class="hero">
+    <div class="hero-pill">
+        <div class="dot"></div>
+        Powered by Groq AI
+    </div>
+    <h1>Content that matches<br><span class="hl">how you feel</span></h1>
+    <p>Pick your mood and get personalized movies, music, books, and ideas — instantly.</p>
+</div>
+
+<div class="stats-row">
+    <div class="stat">
+        <div class="stat-num">10</div>
+        <div class="stat-label">Moods</div>
+    </div>
+    <div class="stat">
+        <div class="stat-num">4</div>
+        <div class="stat-label">Categories</div>
+    </div>
+    <div class="stat">
+        <div class="stat-num">AI</div>
+        <div class="stat-label">Powered</div>
+    </div>
+    <div class="stat">
+        <div class="stat-num">Free</div>
+        <div class="stat-label">To use</div>
+    </div>
+</div>
+
+<div class="form-wrap">
+    <div class="form-card" id="formCard">
+        <div class="field-label" style="margin-bottom:14px;">How are you feeling right now?</div>
+        <div class="mood-grid" id="moodGrid">
+            <div class="mood-chip happy" data-mood="happy"><span class="mji">😊</span><span class="mlb">Happy</span>
+            </div>
+            <div class="mood-chip sad" data-mood="sad"><span class="mji">😢</span><span class="mlb">Sad</span></div>
+            <div class="mood-chip excited" data-mood="excited"><span class="mji">🎉</span><span
+                    class="mlb">Excited</span></div>
+            <div class="mood-chip calm" data-mood="calm"><span class="mji">😌</span><span class="mlb">Calm</span></div>
+            <div class="mood-chip anxious" data-mood="anxious"><span class="mji">😰</span><span
+                    class="mlb">Anxious</span></div>
+            <div class="mood-chip motivated" data-mood="motivated"><span class="mji">💪</span><span
+                    class="mlb">Motivated</span></div>
+            <div class="mood-chip romantic" data-mood="romantic"><span class="mji">💕</span><span
+                    class="mlb">Romantic</span></div>
+            <div class="mood-chip nostalgic" data-mood="nostalgic"><span class="mji">🌅</span><span
+                    class="mlb">Nostalgic</span></div>
+            <div class="mood-chip adventurous" data-mood="adventurous"><span class="mji">🗺️</span><span
+                    class="mlb">Adventure</span></div>
+            <div class="mood-chip thoughtful" data-mood="thoughtful"><span class="mji">🤔</span><span
+                    class="mlb">Thoughtful</span></div>
         </div>
-        
-        <div class="results" id="results">
-            <div class="mood-header" id="moodHeader"></div>
-            
-            <div class="category" id="moviesSection">
-                <h2 class="category-title">🎬 Movies</h2>
-                <div id="movies"></div>
+        <div class="field-label">Topic or interest <span
+                style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--color-text-tertiary)">(optional)</span>
+        </div>
+        <div class="topic-row">
+            <input type="text" id="topicInput" placeholder="e.g. sci-fi, cooking, travel, jazz…" />
+        </div>
+        <button class="gen-btn" id="genBtn" onclick="generate()">
+            <div class="spin-icon" id="btnSpin"></div>
+            <span id="btnText">Generate my recommendations</span>
+            <span id="btnArrow">✦</span>
+        </button>
+    </div>
+</div>
+
+<div class="error-bar" id="errorBar"></div>
+
+<div class="loading-state" id="loadingState">
+    <div class="pulse-ring"></div>
+    <p>Curating your personalized picks…</p>
+</div>
+
+<div class="tabs-wrap" id="tabsWrap">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('movies',this)">🎬 Movies</button>
+        <button class="tab-btn" onclick="switchTab('songs',this)">🎵 Music</button>
+        <button class="tab-btn" onclick="switchTab('books',this)">📚 Books</button>
+        <button class="tab-btn" onclick="switchTab('blogs',this)">📝 Blog ideas</button>
+    </div>
+</div>
+
+<div class="results-area" id="resultsArea">
+    <div class="mood-banner" id="moodBanner"></div>
+    <div class="sec-label" id="secLabel">Recommendations</div>
+    <div class="items-grid" id="itemsGrid"></div>
+</div>
+
+<footer>
+    <div class="footer-top">
+        <div class="footer-brand">
+            <div style="display:flex;align-items:center;gap:9px;">
+                <div class="logo-mark" style="width:28px;height:28px;animation:none;">
+                    <svg viewBox="0 0 16 16" fill="none" width="15" height="15">
+                        <circle cx="8" cy="8" r="5" stroke="white" stroke-width="1.5" />
+                        <circle cx="6" cy="7" r="1" fill="white" />
+                        <circle cx="10" cy="7" r="1" fill="white" />
+                        <path d="M5.5 10 Q8 12.5 10.5 10" stroke="white" stroke-width="1.3" stroke-linecap="round"
+                            fill="none" />
+                    </svg>
+                </div>
+                <span style="font-size:16px;font-weight:500;color:var(--color-text-primary);">mood<span
+                        style="background:linear-gradient(90deg,#7F77DD,#D4537E);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">ly</span></span>
             </div>
-            
-            <div class="category" id="songsSection">
-                <h2 class="category-title">🎵 Songs</h2>
-                <div id="songs"></div>
-            </div>
-            
-            <div class="category" id="booksSection">
-                <h2 class="category-title">📚 Books</h2>
-                <div id="books"></div>
-            </div>
-            
-            <div class="category" id="blogsSection">
-                <h2 class="category-title">📝 Blog Topics</h2>
-                <div id="blogs"></div>
-            </div>
+            <p>Discover content that resonates with your mood, powered by AI.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Product</h4>
+            <a>Discover</a><a>Collections</a><a>Trending</a><a>API access</a>
+        </div>
+        <div class="footer-col">
+            <h4>Company</h4>
+            <a>About</a><a>Blog</a><a>Careers</a><a>Press kit</a>
+        </div>
+        <div class="footer-col">
+            <h4>Legal</h4>
+            <a>Privacy policy</a><a>Terms of use</a><a>Cookie settings</a><a>Contact</a>
         </div>
     </div>
-    
-    <script>
-        document.getElementById('moodForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const mood = document.getElementById('mood').value;
-            const topic = document.getElementById('topic').value;
-            
-            // Hide previous results and errors
-            document.getElementById('results').style.display = 'none';
-            document.getElementById('error').style.display = 'none';
-            document.getElementById('loading').style.display = 'block';
-            
-            try {
-                const response = await fetch('/generate', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ mood, topic })
-                });
-                
-                const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                
-                displayResults(data);
-                
-            } catch (error) {
-                document.getElementById('error').textContent = error.message;
-                document.getElementById('error').style.display = 'block';
-            } finally {
-                document.getElementById('loading').style.display = 'none';
-            }
+    <div class="footer-bottom">
+        <span class="footer-copy">© 2026 Moodly. All rights reserved.</span>
+        <div class="footer-badges">
+            <span class="fbadge">
+                <svg viewBox="0 0 10 10" fill="none" width="10" height="10">
+                    <circle cx="5" cy="5" r="4" stroke="#534AB7" stroke-width="1" />
+                    <path d="M3 5l1.5 1.5L7 3.5" stroke="#534AB7" stroke-width="1" stroke-linecap="round" />
+                </svg>
+                Groq AI powered
+            </span>
+            <span class="fbadge">
+                <svg viewBox="0 0 10 10" fill="none" width="10" height="10">
+                    <rect x="1" y="1" width="8" height="8" rx="2" stroke="#1D9E75" stroke-width="1" />
+                    <path d="M3 5l1.5 1.5L7 3.5" stroke="#1D9E75" stroke-width="1" stroke-linecap="round" />
+                </svg>
+                Free to use
+            </span>
+        </div>
+    </div>
+</footer>
+
+<script>
+    let selectedMood = '', allData = null, activeTab = 'movies';
+    const moodEmojis = { happy: '😊', sad: '😢', excited: '🎉', calm: '😌', anxious: '😰', motivated: '💪', romantic: '💕', nostalgic: '🌅', adventurous: '🗺️', thoughtful: '🤔' };
+    const tabLabels = { movies: 'Movies', songs: 'Music tracks', books: 'Books', blogs: 'Blog ideas' };
+    const tabIcons = { movies: '🎬', songs: '🎵', books: '📚', blogs: '📝' };
+
+    function scrollToForm() { document.getElementById('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+
+    document.querySelectorAll('.mood-chip').forEach(c => {
+        c.addEventListener('click', () => {
+            document.querySelectorAll('.mood-chip').forEach(x => x.classList.remove('active'));
+            c.classList.add('active');
+            selectedMood = c.dataset.mood;
         });
-        
-        function displayResults(data) {
-            const { mood, topic, recommendations } = data;
-            
-            // Update mood header
-            const moodHeader = document.getElementById('moodHeader');
-            moodHeader.innerHTML = `
-                <h2>Your personalized recommendations for: ${mood}${topic ? ` + ${topic}` : ''}</h2>
-                <p>Curated just for you by AI ✨</p>
-            `;
-            
-            // Display movies
-            const moviesDiv = document.getElementById('movies');
-            moviesDiv.innerHTML = recommendations.movies.map(movie => `
-                <div class="item">
-                    <div class="item-title">${movie.title}</div>
-                    <div class="item-description">${movie.description}</div>
-                    <div class="item-why"><strong>Why this matches:</strong> ${movie.why}</div>
-                </div>
-            `).join('');
-            
-            // Display songs
-            const songsDiv = document.getElementById('songs');
-            songsDiv.innerHTML = recommendations.songs.map(song => `
-                <div class="item">
-                    <div class="item-title">${song.title}</div>
-                    <div class="item-meta">${song.artist}</div>
-                    <div class="item-description">${song.description}</div>
-                    <div class="item-why"><strong>Why this matches:</strong> ${song.why}</div>
-                </div>
-            `).join('');
-            
-            // Display books
-            const booksDiv = document.getElementById('books');
-            booksDiv.innerHTML = recommendations.books.map(book => `
-                <div class="item">
-                    <div class="item-title">${book.title}</div>
-                    <div class="item-meta">by ${book.author}</div>
-                    <div class="item-description">${book.description}</div>
-                    <div class="item-why"><strong>Why this matches:</strong> ${book.why}</div>
-                </div>
-            `).join('');
-            
-            // Display blogs
-            const blogsDiv = document.getElementById('blogs');
-            blogsDiv.innerHTML = recommendations.blogs.map(blog => `
-                <div class="item">
-                    <div class="item-title">${blog.title}</div>
-                    <div class="item-description">${blog.description}</div>
-                    <div class="item-why"><strong>Why this matches:</strong> ${blog.why}</div>
-                </div>
-            `).join('');
-            
-            // Show results
-            document.getElementById('results').style.display = 'block';
-            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    function switchTab(tab, el) {
+        activeTab = tab;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+        if (allData) renderTab(tab);
+    }
+
+    function renderTab(tab) {
+        const items = allData.recommendations[tab] || [];
+        document.getElementById('secLabel').textContent = tabLabels[tab];
+        const grid = document.getElementById('itemsGrid');
+        grid.style.gridTemplateColumns = tab === 'blogs' ? '1fr' : 'repeat(auto-fit,minmax(200px,1fr))';
+        const delays = ['0.05s', '0.12s', '0.19s'];
+        if (tab === 'movies') {
+            grid.innerHTML = items.map((m, i) => `<div class="rec-card" style="animation-delay:${delays[i]}"><div class="ctype">${tabIcons[tab]} Movie</div><div class="ctitle">${m.title}</div><div class="cdesc">${m.description}</div><div class="cwhy">${m.why}</div></div>`).join('');
+        } else if (tab === 'songs') {
+            grid.innerHTML = items.map((s, i) => `<div class="rec-card" style="animation-delay:${delays[i]}"><div class="ctype">${tabIcons[tab]} Track</div><div class="ctitle">${s.title}</div><div class="csub">${s.artist}</div><div class="cdesc">${s.description}</div><div class="cwhy">${s.why}</div></div>`).join('');
+        } else if (tab === 'books') {
+            grid.innerHTML = items.map((b, i) => `<div class="rec-card" style="animation-delay:${delays[i]}"><div class="ctype">${tabIcons[tab]} Book</div><div class="ctitle">${b.title}</div><div class="csub">by ${b.author}</div><div class="cdesc">${b.description}</div><div class="cwhy">${b.why}</div></div>`).join('');
+        } else {
+            grid.innerHTML = items.map((bl, i) => `<div class="rec-card" style="animation-delay:${delays[i]}"><div class="ctype">${tabIcons[tab]} Blog idea</div><div class="ctitle">${bl.title}</div><div class="cdesc">${bl.description}</div><div class="cwhy">${bl.why}</div></div>`).join('');
         }
-    </script>
-</body>
-</html>
+    }
+
+    async function generate() {
+        if (!selectedMood) { showError('Please select a mood first.'); return; }
+        const topic = document.getElementById('topicInput').value.trim();
+        const btn = document.getElementById('genBtn');
+        btn.disabled = true;
+        document.getElementById('btnSpin').style.display = 'block';
+        document.getElementById('btnArrow').style.display = 'none';
+        document.getElementById('btnText').textContent = 'Generating…';
+        document.getElementById('loadingState').style.display = 'block';
+        document.getElementById('tabsWrap').style.display = 'none';
+        document.getElementById('resultsArea').style.display = 'none';
+        document.getElementById('errorBar').style.display = 'none';
+
+        try {
+            const res = await fetch('/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mood: selectedMood, topic: topic })
+            });
+            const raw = await res.json();
+            if (!res.ok) throw new Error(raw.error || 'Server error');
+            allData = raw;
+            allData.mood = selectedMood;
+            allData.moodSummary = raw.recommendations.moodSummary;
+
+            const banner = document.getElementById('moodBanner');
+            banner.className = 'mood-banner ' + selectedMood;
+            banner.innerHTML = `<div class="big-mji">${moodEmojis[selectedMood]}</div><div class="btext"><h3>${selectedMood.charAt(0).toUpperCase() + selectedMood.slice(1)} mode${topic ? ' · ' + topic : ''}</h3><p>${allData.moodSummary || 'Curated just for you'}</p></div>`;
+
+            activeTab = 'movies';
+            document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+            renderTab('movies');
+            document.getElementById('tabsWrap').style.display = 'block';
+            document.getElementById('resultsArea').style.display = 'block';
+            setTimeout(() => document.getElementById('resultsArea').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+        } catch (e) {
+            showError('Something went wrong. Please try again.');
+        } finally {
+            btn.disabled = false;
+            document.getElementById('btnSpin').style.display = 'none';
+            document.getElementById('btnArrow').style.display = 'inline';
+            document.getElementById('btnText').textContent = 'Generate my recommendations';
+            document.getElementById('loadingState').style.display = 'none';
+        }
+    }
+
+    function showError(msg) {
+        const b = document.getElementById('errorBar');
+        b.textContent = msg; b.style.display = 'block';
+        setTimeout(() => { b.style.display = 'none'; }, 4000);
+    }
+</script>
